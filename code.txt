@@ -1,0 +1,84 @@
+# Write code here
+!pip install yfinance seaborn
+
+import yfinance as yf
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+plt.style.use('ggplot')
+
+  stocks = ['RELIANCE.NS', 'TCS.NS', 'INFY.NS']
+
+data = yf.download(
+    stocks,
+    start='2024-01-01',
+    end='2026-01-01'
+)
+data.head()
+
+ close_prices = data['Close']
+close_prices.head() 
+  
+ close_prices.plot(figsize=(12,6))
+plt.title('Stock Closing Prices')
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.show() 
+
+reliance = yf.download(
+    'RELIANCE.NS',
+    start='2024-01-01',
+    end='2026-01-01'
+)
+reliance['SMA20'] = reliance['Close'].rolling(window=20).mean()
+reliance['SMA50'] = reliance['Close'].rolling(window=50).mean()
+reliance.tail()  
+
+plt.figure(figsize=(12,6))
+plt.plot(reliance['Close'], label='Close Price')
+plt.plot(reliance['SMA20'], label='SMA 20')
+plt.plot(reliance['SMA50'], label='SMA 50')
+plt.title('RELIANCE Stock Price with SMA20 and SMA50')
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.legend()
+plt.show()
+
+reliance['Signal'] = 0
+reliance.loc[reliance['SMA20'] > reliance['SMA50'], 'Signal'] = 1
+reliance['Position'] = reliance['Signal'].diff()
+reliance[['Close', 'SMA20', 'SMA50', 'Signal', 'Position']].tail()
+
+buy_signals = reliance[reliance['Position'] == 1]
+sell_signals = reliance[reliance['Position'] == -1]
+print("BUY SIGNALS")
+print(buy_signals[['Close']])
+print("\nSELL SIGNALS")
+print(sell_signals[['Close']])
+
+returns = close_prices.pct_change()
+volatility = returns.std() * np.sqrt(252)
+print("Annual Volatility:")
+print(volatility)
+
+returns = close_prices.pct_change()
+
+volatility = returns.std() * np.sqrt(252)
+
+correlation = returns.corr()
+print(correlation)
+
+returns.corr()
+
+plt.figure(figsize=(8,6))
+sns.heatmap(
+    correlation,
+    annot=True,
+    cmap='coolwarm'
+)
+plt.title('Stock Correlation Heatmap')
+plt.show()
+
+close_prices.to_csv('stock_data.csv')
+print("File Saved Successfully")
